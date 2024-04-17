@@ -1,0 +1,54 @@
+name: Build gRPCUI docker image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest-m
+    permissions:
+      contents: read
+      packages: write
+    env:
+      registry_url: 494494944992.dkr.ecr.us-east-2.amazonaws.com/skip-mev/${{ matrix.image.name }}
+      repo_name: skip-mev/grpc-ui
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@5f4866a30a54f16a52d2ecb4a3898e9e424939cf
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            ghcr.io/skip-mev/${{ matrix.image.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern=v{{major}}.{{minor}}.{{patch}}
+            type=semver,pattern=v{{major}}
+            type=sha,prefix=
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: "./Dockerfile"
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          platforms: ${{ startsWith(github.ref, 'refs/tags/v') && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
