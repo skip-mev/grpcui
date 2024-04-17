@@ -13,9 +13,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    env:
-      registry_url: 494494944992.dkr.ecr.us-east-2.amazonaws.com/skip-mev/${{ matrix.image.name }}
-      repo_name: skip-mev/grpc-ui
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -35,7 +32,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            ghcr.io/skip-mev/${{ matrix.image.name }}
+            ghcr.io/skip-mev/grpc-ui
           tags: |
             type=ref,event=branch
             type=ref,event=pr
